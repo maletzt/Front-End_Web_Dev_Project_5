@@ -1,0 +1,19 @@
+html,body, #map-canvas{
+  	height:100%;
+  	margin: 0px;
+  	padding: 0px;
+}
+
+body{
+  	padding-top:50px; /*padding for navbar*/
+}
+
+#map-canvas {
+	width:58.33333333%;
+    height:100%;
+    position:absolute;
+    right:13px;
+    top:55px;
+    bottom:0;
+    overflow:hidden;
+}
