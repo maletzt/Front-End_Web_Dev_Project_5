@@ -40,4 +40,4 @@ Front-End Web Development Project 5 - Neighborhood Map Project
 
 **Special Thanks**
 
-To Johannes Bohm for the time helping me work through issues, as well as the feedback from my fellow classmates and the coaches
+To my fellow classmates that provided assistance with this project.
