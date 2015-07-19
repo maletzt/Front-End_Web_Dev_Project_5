@@ -11,8 +11,7 @@ Front-End Web Development Project 5 - Neighborhood Map Project
 
 **How to use the applicaton**
 
-* You may download the zip file and then open the index.html in your preferred web brower, or you can click the link below:
-* [Neighborhood Map](http-maletzt.github.io-frontend-nanodegree-neighborhood-map-)
+* You may download the zip file and then open the index.html in your preferred web brower.
 
 ###Resources Used:
 
