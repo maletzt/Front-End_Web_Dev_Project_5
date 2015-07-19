@@ -18,8 +18,7 @@ var ViewModel = function(){
   // Initialize Map and markers, then push to Model
 
   var initMap = function() {
-  /** error check, if google maps is available
-    */
+  // Check to see if google maps is available
     if(typeof window.google === 'object' && typeof window.google.maps === 'object') {
 
       var mapOptions = {
@@ -43,7 +42,7 @@ var ViewModel = function(){
                   '&client_secret= RU514EIHAK4IXLJSG4HGSJ0OC3L3QE0BX2KXBR1E40LM40JZ' +
                   '&v=20150501&venuePhotos=1' + nearloc + query;
 
-
+// Retrieve JSON data from the Foursquare API.
         $.getJSON(API_ENDPOINT, function(data) {
                   var fsPlaces = data.response.groups[0].items;
 
@@ -62,7 +61,7 @@ var ViewModel = function(){
 
                       google.maps.event.addListener(marker, 'click', function() {
                         var that = this;
-                        //added google geocoder for a better address result
+
                         geocoder.geocode({'latLng': that.position}, function(results, status) {
                           if(status == google.maps.GeocoderStatus.OK) {
                             if (results[0]){
@@ -84,29 +83,20 @@ var ViewModel = function(){
                         infowindow.open(map, that);
                         clearMarkers();
 
-                        // Modify marker (and list) to show selected status.
                         that.highlight(true);
 
-                        // Move map viewport to center selected item.
                         map.panTo(that.position);
                         Model.currentMarker(that);
                       });
 
-                      /** click event to close infowindow
-                        * This function will clear any selected markers,
-                        * center the map to show all markers on the map.
-                        */
                       google.maps.event.addListener(infowindow, 'closeclick', function() {
                         clearMarkers();
                         map.panTo(bounds.getCenter());
                         map.fitBounds(bounds);
                       });
 
-                      // Modify map viewport to include new map marker
-                      bounds.extend(fsPosition);
+                  bounds.extend(fsPosition);
 
-                      //Add marker to array
-                      //self.markerArray.push(marker);
                       Model.markers.push(marker);
                     }
 
@@ -116,22 +106,20 @@ var ViewModel = function(){
                   });
 
                 } else {
-                    //if no google object found, display error div
-                  self.mapUnavailable(true);
+                    self.mapUnavailable(true);
                 }
               }();
 
-                /** filter and return items that match query
-                  */
+                // Based on the query this will return the filtered items
                   self.filteredArray = ko.computed(function() {
                     return ko.utils.arrayFilter(Model.markers(), function(marker) {
                       return marker.title.toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
                     });
                   }, self);
 
-                /** Subscribing to the filteredArray changes will allow for showing or hiding
-                  * the associated markers on the map itself.
-                  */
+
+                // Hides or shows the markers based on the filteredArray
+
                   self.filteredArray.subscribe(function() {
                     var diffArray = ko.utils.compareArrays(Model.markers(), self.filteredArray());
                     ko.utils.arrayForEach(diffArray, function(marker) {
@@ -148,11 +136,11 @@ var ViewModel = function(){
                   google.maps.event.trigger(listItem, 'click');
                 };
 
-                /** reset all markers, clear color in list and reset the currentMarker variable.
-                */
+                // Allows the rest of the currentMarker variable, clears highlighted color in the list and resets all markers.
+
                 function clearMarkers() {
-                  for(var x = 0; x < Model.markers().length; x++){
-                   Model.markers()[x].highlight(false);
+                  for(var i = 0; i < Model.markers().length; i++){
+                   Model.markers()[i].highlight(false);
                  }
                  Model.currentMarker(null);
                }
