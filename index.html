@@ -11,15 +11,28 @@
 		<link href="css/offline-theme-chrome.css" rel="stylesheet" >
     <link href="css/offline-language-english.css" rel="stylesheet" >
 		<link rel="stylesheet" href="css/main.css">
-		<script src='js/jquery-2.1.4.min.js'></script>
-		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-		<script src='https://cdnjs.cloudflare.com/ajax/libs/knockout/3.3.0/knockout-min.js'></script>
-		<script src="http://maps.googleapis.com/maps/api/js?v=3"></script>
-		<script src="js/offline.min.js"></script>
+		<!-- Offline.js -->
+		<script src="http://github.hubspot.com/offline/offline.min.js"></script>
+		<link rel="stylesheet" href="css/offline-theme-chrome.css" />
+		<link rel="stylesheet" href="css/offline-language-english.css" />
     <script>
-	    Offline.options = {checks: {image: {url: 'https://github.com/maletzt/front-end_Web_dev_Project_5/tree/master/images/offline.png'
-	    }, active: 'image'}};
+			Offline.options = {
+			game: false,
+			checks: {
+				image: {
+					url: function() { return 'https://raw.githubusercontent.com/maletzt/Front-End_Web_Dev_Project_5/master/favicon.png?_=' + (Math.floor(Math.random() * 1000000000)); }
+				},
+				active: 'image'
+			}
+		}
+		var run = function(){
+		 	if (Offline.state === 'up') {
+				Offline.check();
+		 	}
+		}
+		setInterval(run, 5000);
     </script>
+	</head>
 		<body>
 			<div class='sidebar'>
 			<div class='heading'>
@@ -36,10 +49,14 @@
 		</div>
 		<div id='map' class="map pad2">Map</div>
 		  <!-- ko if: mapUnavailable -->
-		    <div class="map-error">
+		    <!-- <div class="map-error">
 		      <p>Google Maps currently is experiencing technical difficulties please try again later!</p>
-		    </div>
+		    </div> -->
 		    <!-- /ko -->
+				<script src='js/jquery-2.1.4.min.js'></script>
+				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+				<script src='https://cdnjs.cloudflare.com/ajax/libs/knockout/3.3.0/knockout-min.js'></script>
+				<script src="http://maps.googleapis.com/maps/api/js?v=3"></script>
 		    <script async src="js/app.js"></script>
 		  </body>
 		</html>
