@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 var Model = {
     currentMarker: ko.observable(null),
     markers: ko.observableArray()
@@ -45,68 +45,73 @@ var ViewModel = function() {
 
             // Retrieve JSON data from the Foursquare API.
             $.getJSON(API_ENDPOINT, function(data) {
-                var fsPlaces = data.response.groups[0].items;
+                    var fsPlaces = data.response.groups[0].items;
 
-                for (var i = 0; i < fsPlaces.length; i++) {
-                    var fsPosition = new google.maps.LatLng(fsPlaces[i].venue.location.lat, fsPlaces[i].venue.location.lng);
-                    var rating = fsPlaces[i].venue.rating;
-                    var marker = new google.maps.Marker({
-                        position: fsPosition,
-                        map: map,
-                        animation: google.maps.Animation.DROP,
-                        title: fsPlaces[i].venue.name,
-                        url: fsPlaces[i].venue.url,
-                        highlight: ko.observable(false),
-                        fsRating: fsPlaces[i].venue.rating
-                    });
-
-                    google.maps.event.addListener(marker, 'click', function() {
-                        var that = this;
-
-                        geocoder.geocode({
-                            'latLng': that.position
-                        }, function(results, status) {
-                            if (status == google.maps.GeocoderStatus.OK) {
-                                if (results[0]) {
-                                    var address = results[0].formatted_address;
-                                    var streetviewURL = "http://maps.googleapis.com/maps/api/streetview?size=200x150&location=" + address + "";
-                                    var split = address.indexOf(',');
-                                    infowindow.setContent("<span class='title'>" + that.title +
-                                        "</span><br>" + address.slice(0, split) + "<br>" +
-                                        (address.slice(split + 1)) +
-                                        "<br><a href=" + that.url + ">" + that.url + "</a><br>" + "<img src='" + streetviewURL + "'><br><strong>Foursquare Rating: </strong>" + that.fsRating + "");
-                                }
-                            } else {
-                                infowindow.setContent("<span class='title'>" + that.title +
-                                    "</span><br><<Can't find address :-(>><br><a href=" +
-                                    that.url + ">" + that.url + "</a><br>");
-                            }
+                    for (var i = 0; i < fsPlaces.length; i++) {
+                        var fsPosition = new google.maps.LatLng(fsPlaces[i].venue.location.lat, fsPlaces[i].venue.location.lng);
+                        var rating = fsPlaces[i].venue.rating;
+                        var marker = new google.maps.Marker({
+                            position: fsPosition,
+                            map: map,
+                            animation: google.maps.Animation.DROP,
+                            title: fsPlaces[i].venue.name,
+                            url: fsPlaces[i].venue.url,
+                            highlight: ko.observable(false),
+                            fsRating: fsPlaces[i].venue.rating
                         });
-                        // open infoWindow and clear markers
-                        infowindow.open(map, that);
-                        clearMarkers();
 
-                        that.highlight(true);
+                        google.maps.event.addListener(marker, 'click', function() {
+                            var that = this;
 
-                        map.panTo(that.position);
-                        Model.currentMarker(that);
-                    });
+                            geocoder.geocode({
+                                'latLng': that.position
+                            }, function(results, status) {
+                                if (status == google.maps.GeocoderStatus.OK) {
+                                    if (results[0]) {
+                                        var address = results[0].formatted_address;
+                                        var streetviewURL = "http://maps.googleapis.com/maps/api/streetview?size=200x150&location=" + address + "";
+                                        var split = address.indexOf(',');
+                                        infowindow.setContent("<span class='title'>" + that.title +
+                                            "</span><br>" + address.slice(0, split) + "<br>" +
+                                            (address.slice(split + 1)) +
+                                            "<br><a href=" + that.url + ">" + that.url + "</a><br>" + "<img src='" + streetviewURL + "'><br><strong>Foursquare Rating: </strong>" + that.fsRating + "");
+                                    }
+                                } else {
+                                    infowindow.setContent("<span class='title'>" + that.title +
+                                        "</span><br><<Can't find address :-(>><br><a href=" +
+                                        that.url + ">" + that.url + "</a><br>");
+                                }
+                            });
+                            // open infoWindow and clear markers
+                            infowindow.open(map, that);
+                            clearMarkers();
 
-                    google.maps.event.addListener(infowindow, 'closeclick', function() {
-                        clearMarkers();
-                        map.panTo(bounds.getCenter());
-                        map.fitBounds(bounds);
-                    });
+                            that.highlight(true);
 
-                    bounds.extend(fsPosition);
+                            map.panTo(that.position);
+                            Model.currentMarker(that);
+                        });
 
-                    Model.markers.push(marker);
-                }
+                        google.maps.event.addListener(infowindow, 'closeclick', function() {
+                            clearMarkers();
+                            map.panTo(bounds.getCenter());
+                            map.fitBounds(bounds);
+                        });
 
-                map.fitBounds(bounds);
-                map.setCenter(bounds.getCenter());
+                        bounds.extend(fsPosition);
 
-            });
+                        Model.markers.push(marker);
+                    }
+
+                    map.fitBounds(bounds);
+                    map.setCenter(bounds.getCenter());
+
+                })
+                .error(function(e) {
+                    //If FourSquare data isn't being retrieved due to WIFI or other connection issues, it will print out this error.
+                    alert('Please check your Internet connection. Please try it later!');
+                    console.log('error');
+                });
 
         } else {
             self.mapUnavailable(true);
