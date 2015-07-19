@@ -1,7 +1,8 @@
+'use strict';
 var Model = {
     currentMarker: ko.observable(null),
     markers: ko.observableArray()
-}
+};
 
 var ViewModel = function() {
     var self = this;
