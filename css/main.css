@@ -1,154 +1,92 @@
-html,body, #map-canvas{
-  	height:100%;
-  	margin: 0px;
-  	padding: 0px;
+body {
+  color:#404040;
+  font:400 15px/22px 'Helvetica Neue', Sans-serif;
+  margin:0;
+  padding:0;
+  -webkit-font-smoothing:antialiased;
+}
+* {
+  -webkit-box-sizing:border-box;
+  -moz-box-sizing:border-box;
+  box-sizing:border-box;
 }
 
-body{
-  	padding-top:50px; /*padding for navbar*/
+/*3D text code provided by Mark Dotto http://markdotto.com/playground/3d-text*/
+h1 {
+  text-align:center;
+  text-shadow: 0 1px 0 #ccc,
+               0 2px 0 #c9c9c9,
+               0 3px 0 #bbb,
+               0 4px 0 #b9b9b9,
+               0 5px 0 #aaa,
+               0 6px 1px rgba(0,0,0,.1),
+               0 0 5px rgba(0,0,0,.1),
+               0 1px 3px rgba(0,0,0,.3),
+               0 3px 5px rgba(0,0,0,.2),
+               0 5px 10px rgba(0,0,0,.25),
+               0 10px 10px rgba(0,0,0,.2),
+               0 20px 20px rgba(0,0,0,.15);
 }
-
-#map-canvas {
-  width:58.3%;
-  height:100%;
+.sidebar {
   position:absolute;
-  right:13px;
-  top:55px;
-  bottom:0;
+  width:33.3333%;
+  height:100%;
+  top:0;left:0;
   overflow:hidden;
+  border-right:1px solid rgba(0,0,0,0.25);
 }
-#map-error {
-    display: block;
-    overflow: auto;
-    height: 100%;
-    width: 100%;
-    padding-bottom: 5%;
-    padding-right: 20%;
-    padding-left: 40%;
+.pad2 {
+  padding:20px;
 }
-
-.categoryfont{
-    font-style: italic;
-    font-weight: lighter;
+.map {
+  position:absolute;
+  left:33.3333%;
+  width:66.6666%;
+  top:0;bottom:0;
 }
 
-.namefont{
-    font-weight: bolder;
-    color: #204d74;
+.listings {
+  height:100%;
+  overflow:auto;
+  padding-bottom:60px;
 }
 
-.venue-group {
-    position: absolute;
-    top: 60px;
-    display: block;
-    overflow: auto;
-    height: 520px;
-       z-index: 1;
-    font-family: "Optima", sans-serif;
+ul {
+  list-style: none;
 }
 
-.list-group div:hover{
-    background-color: #f6f080;
-}
-
-.media {
-    background: #fff;
-    margin-top: 0px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.58);
-}
-
-.vinfowindow {
-    max-width: 210px;
-}
-
-.vinfowindow .venuename {
-    font-family: "Optima", sans-serif;
-    font-size: 14px;
-    font-weight: 400;
-}
-
-.vrating {
-    float: right;
-    clear: left;
-    background-color: #ff4e00;
-}
-
-.vcontact{
-    font-weight: bold;
+ul li {
+  display: block;
+  text-decoration: none;
+  color: #333;
+  background-color: white;
+  line-height: 30px;
+  border-bottom: solid 1px #3d9970;
+  padding: 0 5px;
 }
 
 
-
-.otherimg {
-    max-width: 200px !important;
+.selected, ul li:hover {
+  color: white;
+  background-color: #2ecc40;
 }
 
-#resultslist{
-    display:none;
+.map-error {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: #444;
+  z-index: 102;
+  color: white;
+  font-family: 'Roboto', sans-serif;
+  font-size: 1.0em;
+  text-align: center;
 }
 
-@media only screen and (max-width : 760px) {
-
-    #map-error {
-        display: block;
-        overflow: auto;
-        height: 100%;
-        width: 100%;
-        padding-top: 20%;
-        padding-right: 20%;
-        padding-left: 60%;
-    }
-
-    #resultslist{
-        display:block;
-    }
-    .venue-group {
-        position: absolute;
-        top: 60px;
-        display: block;
-        overflow: auto;
-        width: 200px;
-        height: 65%;
-        left: 20px;
-        font-size: small;
-        z-index: 1;
-    }
-    .media {
-        width: 200px;
-        height: 100px;
-        background: #fff;
-        font-size: small !important;
-    }
-    .pull-left {
-        width: 60px;
-    }
-
-    .search-bar {
-        position: absolute;
-        top: 5px;
-        z-index: 1;
-        left: 20px;
-    }
-    .search-bar input {
-        width: 100px;
-        display: inline-block;
-        font-size: 8px;
-    }
-    .badge {
-        font-size: 8px;
-    }
-
-    .media-heading,.list-group-item-text {
-        font-size: 10px;
-        word-wrap: break-word;
-    }
-
-    .vinfowindow {
-        max-width: 100px;
-    }
-
-    .vinfowindow .venuename {
-        font-size: 10px;
-    }
-
+@media only screen and (max-width: 600px){
+  #listings {
+    display: none;
+  }
 }

@@ -1,231 +1,161 @@
-var googleMap;
-
-
-function initialize() {
-  var mapOptions = {
-      zoom: 14,
-      panControl: false,
-      panControlOptions: {
-          style: google.maps.ZoomControlStyle.DEFAULT,
-          position: google.maps.ControlPosition.RIGHT_BOTTOM
-        },
-          zoomControl: false,
-          zoomControlOptions: {
-            style: google.maps.ZoomControlStyle.LARGE,
-            position: google.maps.ControlPosition.RIGHT_CENTER
-        },
-        overviewMapControl: false,
-        streetViewControl: false
-    };
-
-    try {
-        googleMap = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
-        $('#map-canvas').height($(window).height());
-    } catch (err) {
-        //If the Google Maps API does not respond, it will load this error.
-        $('#map-canvas').hide();
-        alert('There has been some technical difficultly loading the map. Please double-check your Internet connection and try again!');
-
-    }
+var Model = {
+  currentMarker: ko.observable(null),
+  markers: ko.observableArray()
 }
-// Model for the location information
 
-var LocationsInfo = function(item){
-  this.name = ko.observable(item.venue.name);
-  this.address = ko.observable(item.venue.location.formattedAddress);
-  this.phone = ko.observable(item.venue.contact.formattedPhone);
-  this.rating = ko.observable(item.venue.rating);
-  this.category = ko.observable(item.venue.categories[0].name);
-  this.sourceimg = ko.observable('https://irs0.4sqi.net/img/general/75x75' + item.venue.photos.groups[0].items[0].suffix);
-};
-
-// ViewModel for Knockout
 var ViewModel = function(){
   var self = this;
-// Array for the markers associated with the map
-  var fsmarkers = [];
-
-// Array for Points of Interest
-  self.poi_list = ko.observableArray([]);
-
-// Default location for the map
+  var map, geocoder, bounds, infowindow;
+  // Default location for the map
   this.defaultloc = ko.observable("Duluth, GA");
 
 // Default Foursquare venue for the search
-  this.defaultsearch = ko.observable ("dog");
+  this.defaultsearch = ko.observable ("dog run");
 
-// Display for the listings of Points of Interest
-  self.showplaces = ko.observable('true');
+  self.mapUnavailable = ko.observable(false);
+  self.query = ko.observable('');
 
-// Infowindow setup
-if (typeof google != "undefined") {
-        var infowindow = new google.maps.InfoWindow();
-    }
+  // Initialize Map and markers, then push to Model
 
-//  Sets the map boundaries based from the FourSquare API.
-    function setMapBoundaries(prefferedbounds) {
-       if (typeof google != "undefined") {
-            //SouthWest and NorthEast coordinates
-            var boundto = new google.maps.LatLngBounds(
-              new google.maps.LatLng(prefferedbounds.sw.lat, prefferedbounds.sw.lng),
-              new google.maps.LatLng(prefferedbounds.ne.lat, prefferedbounds.ne.lng));
-           googleMap.fitBounds(boundto);
-           // center the map
-           googleMap.setCenter(boundto.getCenter());
-        }
+  var initMap = function() {
+  /** error check, if google maps is available
+    */
+    if(typeof window.google === 'object' && typeof window.google.maps === 'object') {
 
-    }
+      var mapOptions = {
+        disableDefaultUI: true
+      };
 
-// Search Function
-self.searchLocations = function(){
-  var all_locations = [];
-  deleteMarkers();
+      map = new google.maps.Map(document.getElementById('map'), mapOptions);
+      geocoder = new google.maps.Geocoder();
+      bounds = new google.maps.LatLngBounds();
+      infowindow = new google.maps.InfoWindow({
+        content: null
+      });
+      //Venue category for the API request. Also allows to change the value for the venue without having to touch the API string
+        var query = '&query=' + self.defaultsearch();
 
-  self.poi_list([]);
+      //Default location for the API's request.
+        var nearloc = '&near=' + self.defaultloc();
 
-
-//Venue category for the API request. Also allows to change the value for the venue without having to touch the API string
-  var query = '&query=' + self.defaultsearch();
-
-//Default location for the API's request.
-  var nearloc = '&near=' + self.defaultloc();
-
-  var API_ENDPOINT = 'https://api.foursquare.com/v2/venues/explore?' +
-            '&client_id=KEMJ033J04CMFDVEZR0OJJRJA2G2PMOLQ4YQBO30G0DG2RJC' +
-            '&client_secret= RU514EIHAK4IXLJSG4HGSJ0OC3L3QE0BX2KXBR1E40LM40JZ' +
-            '&v=20150501&venuePhotos=1' + nearloc + query;
+        var API_ENDPOINT = 'https://api.foursquare.com/v2/venues/explore?' +
+                  '&client_id=KEMJ033J04CMFDVEZR0OJJRJA2G2PMOLQ4YQBO30G0DG2RJC' +
+                  '&client_secret= RU514EIHAK4IXLJSG4HGSJ0OC3L3QE0BX2KXBR1E40LM40JZ' +
+                  '&v=20150501&venuePhotos=1' + nearloc + query;
 
 
-  $.getJSON(API_ENDPOINT, function(data) {
-            var places = data.response.groups[0].items;
-            setMapBoundaries(data.response.suggestedBounds);
+        $.getJSON(API_ENDPOINT, function(data) {
+                  var fsPlaces = data.response.groups[0].items;
 
-            for (var i = 0; i < places.length; i++) {
-                var item = places[i];
-                console.log(item);
-                //This will show the items list along with their pictures.
-                if (item.venue.photos.groups.length !== 0) {
-                    self.poi_list.push(new LocationsInfo(item));
-                    all_locations.push(item.venue);
+                  for (var i = 0; i < fsPlaces.length; i++) {
+                      var fsPosition = new google.maps.LatLng(fsPlaces[i].venue.location.lat, fsPlaces[i].venue.location.lng);
+                      var rating = fsPlaces[i].venue.rating;
+                      var marker = new google.maps.Marker({
+                        position: fsPosition,
+                        map: map,
+                        animation: google.maps.Animation.DROP,
+                        title: fsPlaces[i].venue.name,
+                        url: fsPlaces[i].venue.url,
+                        highlight: ko.observable(false),
+                        fsRating: fsPlaces[i].venue.rating
+                      });
+
+                      google.maps.event.addListener(marker, 'click', function() {
+                        var that = this;
+                        //added google geocoder for a better address result
+                        geocoder.geocode({'latLng': that.position}, function(results, status) {
+                          if(status == google.maps.GeocoderStatus.OK) {
+                            if (results[0]){
+                              var address = results[0].formatted_address;
+                              var streetviewURL = "http://maps.googleapis.com/maps/api/streetview?size=200x150&location=" + address + "";
+                              var split = address.indexOf(',');
+                              infowindow.setContent("<span class='title'>" + that.title +
+                                "</span><br>" + address.slice(0,split) + "<br>" +
+                                (address.slice(split+1)) +
+                                "<br><a href=" + that.url + ">" + that.url + "</a><br>" + "<img src='" + streetviewURL + "'><br><strong>Foursquare Rating: </strong>" + that.fsRating +"" );
+                            }
+                          } else {
+                            infowindow.setContent("<span class='title'>" + that.title +
+                              "</span><br><<Can't find address :-(>><br><a href=" +
+                              that.url + ">" + that.url + "</a><br>");
+                          }
+                        });
+                        // open infoWindow and clear markers
+                        infowindow.open(map, that);
+                        clearMarkers();
+
+                        // Modify marker (and list) to show selected status.
+                        that.highlight(true);
+
+                        // Move map viewport to center selected item.
+                        map.panTo(that.position);
+                        Model.currentMarker(that);
+                      });
+
+                      /** click event to close infowindow
+                        * This function will clear any selected markers,
+                        * center the map to show all markers on the map.
+                        */
+                      google.maps.event.addListener(infowindow, 'closeclick', function() {
+                        clearMarkers();
+                        map.panTo(bounds.getCenter());
+                        map.fitBounds(bounds);
+                      });
+
+                      // Modify map viewport to include new map marker
+                      bounds.extend(fsPosition);
+
+                      //Add marker to array
+                      //self.markerArray.push(marker);
+                      Model.markers.push(marker);
+                    }
+
+                    map.fitBounds(bounds);
+                    map.setCenter(bounds.getCenter());
+
+                  });
+
+                } else {
+                    //if no google object found, display error div
+                  self.mapUnavailable(true);
                 }
-            }
+              }();
 
-            //Sorts the list from highest to lowest ratings of each locations.
-          
-            self.poi_list.sort(function(left, right) {
-                return left.rating() == right.rating() ? 0 : (left.rating() > right.rating() ? -1 : 1);
-            });
+                /** filter and return items that match query
+                  */
+                  self.filteredArray = ko.computed(function() {
+                    return ko.utils.arrayFilter(Model.markers(), function(marker) {
+                      return marker.title.toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
+                    });
+                  }, self);
 
-            //Creates the markers on the map.
-            markPlaces(all_locations);
-        }).error(function(e) {
-            //If FourSquare data isn't being retrieved due to WIFI or other connection issues, it will print out this error.
-            alert('There has been some technicial difficultly. Please double-check your internet connection and try again!');
-            console.log('error');
-        });
+                /** Subscribing to the filteredArray changes will allow for showing or hiding
+                  * the associated markers on the map itself.
+                  */
+                  self.filteredArray.subscribe(function() {
+                    var diffArray = ko.utils.compareArrays(Model.markers(), self.filteredArray());
+                    ko.utils.arrayForEach(diffArray, function(marker) {
+                      if (marker.status === 'deleted') {
+                        marker.value.setMap(null);
+                      } else {
+                        marker.value.setMap(map);
+                      }
+                    });
+                  });
 
-    };
+                //Highlight map marker if list item is clicked.
+                self.selectItem = function(listItem) {
+                  google.maps.event.trigger(listItem, 'click');
+                };
 
-    //Will perform search.
-    self.searchLocations();
+                /** reset all markers, clear color in list and reset the currentMarker variable.
+                */
+                function clearMarkers() {
+                  for(var x = 0; x < Model.markers().length; x++){
+                   Model.markers()[x].highlight(false);
+                 }
+                 Model.currentMarker(null);
+               }
+              };
 
-    //This will create the infowindoes on the map.
-    function createInfoWindow(data, marker) {
-
-        /*The infowindow will consist of the locations, name, url, address, phone number, ratings,
-         and street view images
-         */
-        var name = data.name;
-        var locationurl = data.url;
-        var address = data.location.address + ',' + data.location.city + ',' + data.location.country;
-        var contact = data.contact.formattedPhone;
-        var rating = data.rating;
-
-        //Steetview image views along with their sizes.
-        var streetviewlink = 'http://maps.googleapis.com/maps/api/streetview?size=200x100&location=' + address + '';
-
-        //Creates infowindow contents
-        var infocontent = '<div class="vinfowindow">' + '<div class="venuename">' + '<a href ="' + locationurl + '" target="_blank" >' + 
-        name + '</a>' + '<span class="vrating label-info badge">' + rating + '<sub> /10</sub>' + '</span>' + '</div>' + 
-        '<div class="vcontact"><span class="icon-phone"></span>' + contact + '</div>' + '<img class="otherimg" src="' + streetviewlink + '">' + '</div>';
-
-        //If you click on the marker, the infowindow will be displayed.
-        google.maps.event.addListener(marker, 'click', function() {
-            infowindow.setContent(infocontent);
-            infowindow.open(googleMap, marker);
-        });
-    }
-
-    //This will create the markers on the map.
-    function createMarkers(data) {
-
-        var name = data.name;
-        var lat = data.location.lat;
-        var lon = data.location.lng;
-
-        if (typeof google != "undefined") {
-
-            var marker = new google.maps.Marker({
-                map: googleMap,
-                title: name,
-                position: new google.maps.LatLng(lat, lon),
-                animation: google.maps.Animation.DROP
-            });
-            google.maps.event.addListener(marker, 'click', bouncing);
-
-            //Saves the marker for each locations in this array
-            fsmarkers.push(marker);
-
-            createInfoWindow(data, marker);
-        }
-
-        //Allows the markers to bounce when they are clicked.
-        function bouncing() {
-
-            if (marker.getAnimation() !== null) {
-                marker.setAnimation(null);
-            } else {
-                marker.setAnimation(google.maps.Animation.BOUNCE);
-                setTimeout(function(){ marker.setAnimation(null); }, 2000);
-            }
-        }
-    }
-
-    //This will delete all the markers on the map.
-    function deleteMarkers() {
-        for (var i = 0; i < fsmarkers.length; i++) {
-            fsmarkers[i].setMap(null);
-        }
-
-        //Resets the markers.
-        fsmarkers = [];
-    }
-
-    //This will take the marked places as an array from the FourSquare API and creates the markers to each location.
-    function markPlaces(mp) {
-        // call createMarkers for places
-        for (var i in mp) {
-            createMarkers(mp[i]);
-        }
-    }
-
-    //If the list of items is clicked, it will find the marker on the map.
-    self.focusMarker = function(venue) {
-        var venuename = venue.name();
-        for (var i = 0; i < fsmarkers.length; i++) {
-            if (fsmarkers[i].title == venuename) {
-                google.maps.event.trigger(fsmarkers[i], 'click');
-                googleMap.panTo(fsmarkers[i].position);
-            }
-        }
-
-       };
-};
-
-//Initialize the map and apply the bindings for ViewModel().
-$(document).ready(function() {
-
-    initialize();
-    ko.applyBindings(new ViewModel());
-
-});
+ko.applyBindings(new ViewModel());
