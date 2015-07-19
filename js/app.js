@@ -1,1 +1,149 @@
-var Model={currentMarker:ko.observable(null),markers:ko.observableArray()},ViewModel=function(){function e(){for(var e=0;e<Model.markers().length;e++)Model.markers()[e].highlight(!1);Model.currentMarker(null)}var o,t,r,a,n=this;this.defaultloc=ko.observable("Duluth, GA"),this.defaultsearch=ko.observable("dog run"),n.mapUnavailable=ko.observable(!1),n.query=ko.observable("");!function(){if("object"==typeof window.google&&"object"==typeof window.google.maps){var l={disableDefaultUI:!0};o=new google.maps.Map(document.getElementById("map"),l),t=new google.maps.Geocoder,r=new google.maps.LatLngBounds,a=new google.maps.InfoWindow({content:null});var s="&query="+n.defaultsearch(),i="&near="+n.defaultloc(),u="https://api.foursquare.com/v2/venues/explore?&client_id=KEMJ033J04CMFDVEZR0OJJRJA2G2PMOLQ4YQBO30G0DG2RJC&client_secret= RU514EIHAK4IXLJSG4HGSJ0OC3L3QE0BX2KXBR1E40LM40JZ&v=20150501&venuePhotos=1"+i+s;$.getJSON(u,function(n){for(var l=n.response.groups[0].items,s=0;s<l.length;s++){var i=new google.maps.LatLng(l[s].venue.location.lat,l[s].venue.location.lng),u=(l[s].venue.rating,new google.maps.Marker({position:i,map:o,animation:google.maps.Animation.DROP,title:l[s].venue.name,url:l[s].venue.url,highlight:ko.observable(!1),fsRating:l[s].venue.rating}));google.maps.event.addListener(u,"click",function(){var r=this;t.geocode({latLng:r.position},function(e,o){if(o==google.maps.GeocoderStatus.OK){if(e[0]){var t=e[0].formatted_address,n="http://maps.googleapis.com/maps/api/streetview?size=200x150&location="+t,l=t.indexOf(",");a.setContent("<span class='title'>"+r.title+"</span><br>"+t.slice(0,l)+"<br>"+t.slice(l+1)+"<br><a href="+r.url+">"+r.url+"</a><br><img src='"+n+"'><br><strong>Foursquare Rating: </strong>"+r.fsRating)}}else a.setContent("<span class='title'>"+r.title+"</span><br><<Can't find address :-(>><br><a href="+r.url+">"+r.url+"</a><br>")}),a.open(o,r),e(),r.highlight(!0),o.panTo(r.position),Model.currentMarker(r)}),google.maps.event.addListener(a,"closeclick",function(){e(),o.panTo(r.getCenter()),o.fitBounds(r)}),r.extend(i),Model.markers.push(u)}o.fitBounds(r),o.setCenter(r.getCenter())})}else n.mapUnavailable(!0)}();n.filteredArray=ko.computed(function(){return ko.utils.arrayFilter(Model.markers(),function(e){return-1!==e.title.toLowerCase().indexOf(n.query().toLowerCase())})},n),n.filteredArray.subscribe(function(){var e=ko.utils.compareArrays(Model.markers(),n.filteredArray());ko.utils.arrayForEach(e,function(e){e.value.setMap("deleted"===e.status?null:o)})}),n.selectItem=function(e){google.maps.event.trigger(e,"click")}};ko.applyBindings(new ViewModel);
+var Model = {
+  currentMarker: ko.observable(null),
+  markers: ko.observableArray()
+}
+
+var ViewModel = function(){
+  var self = this;
+  var map, geocoder, bounds, infowindow;
+  // Default location for the map
+  this.defaultloc = ko.observable("Duluth, GA");
+
+// Default Foursquare venue for the search
+  this.defaultsearch = ko.observable ("dog run");
+
+  self.mapUnavailable = ko.observable(false);
+  self.query = ko.observable('');
+
+  // Initialize Map and markers, then push to Model
+
+  var initMap = function() {
+  // Check to see if google maps is available
+    if(typeof window.google === 'object' && typeof window.google.maps === 'object') {
+
+      var mapOptions = {
+        disableDefaultUI: true
+      };
+
+      map = new google.maps.Map(document.getElementById('map'), mapOptions);
+      geocoder = new google.maps.Geocoder();
+      bounds = new google.maps.LatLngBounds();
+      infowindow = new google.maps.InfoWindow({
+        content: null
+      });
+      //Venue category for the API request. Also allows to change the value for the venue without having to touch the API string
+        var query = '&query=' + self.defaultsearch();
+
+      //Default location for the API's request.
+        var nearloc = '&near=' + self.defaultloc();
+
+        var API_ENDPOINT = 'https://api.foursquare.com/v2/venues/explore?' +
+                  '&client_id=KEMJ033J04CMFDVEZR0OJJRJA2G2PMOLQ4YQBO30G0DG2RJC' +
+                  '&client_secret= RU514EIHAK4IXLJSG4HGSJ0OC3L3QE0BX2KXBR1E40LM40JZ' +
+                  '&v=20150501&venuePhotos=1' + nearloc + query;
+
+// Retrieve JSON data from the Foursquare API.
+        $.getJSON(API_ENDPOINT, function(data) {
+                  var fsPlaces = data.response.groups[0].items;
+
+                  for (var i = 0; i < fsPlaces.length; i++) {
+                      var fsPosition = new google.maps.LatLng(fsPlaces[i].venue.location.lat, fsPlaces[i].venue.location.lng);
+                      var rating = fsPlaces[i].venue.rating;
+                      var marker = new google.maps.Marker({
+                        position: fsPosition,
+                        map: map,
+                        animation: google.maps.Animation.DROP,
+                        title: fsPlaces[i].venue.name,
+                        url: fsPlaces[i].venue.url,
+                        highlight: ko.observable(false),
+                        fsRating: fsPlaces[i].venue.rating
+                      });
+
+                      google.maps.event.addListener(marker, 'click', function() {
+                        var that = this;
+
+                        geocoder.geocode({'latLng': that.position}, function(results, status) {
+                          if(status == google.maps.GeocoderStatus.OK) {
+                            if (results[0]){
+                              var address = results[0].formatted_address;
+                              var streetviewURL = "http://maps.googleapis.com/maps/api/streetview?size=200x150&location=" + address + "";
+                              var split = address.indexOf(',');
+                              infowindow.setContent("<span class='title'>" + that.title +
+                                "</span><br>" + address.slice(0,split) + "<br>" +
+                                (address.slice(split+1)) +
+                                "<br><a href=" + that.url + ">" + that.url + "</a><br>" + "<img src='" + streetviewURL + "'><br><strong>Foursquare Rating: </strong>" + that.fsRating +"" );
+                            }
+                          } else {
+                            infowindow.setContent("<span class='title'>" + that.title +
+                              "</span><br><<Can't find address :-(>><br><a href=" +
+                              that.url + ">" + that.url + "</a><br>");
+                          }
+                        });
+                        // open infoWindow and clear markers
+                        infowindow.open(map, that);
+                        clearMarkers();
+
+                        that.highlight(true);
+
+                        map.panTo(that.position);
+                        Model.currentMarker(that);
+                      });
+
+                      google.maps.event.addListener(infowindow, 'closeclick', function() {
+                        clearMarkers();
+                        map.panTo(bounds.getCenter());
+                        map.fitBounds(bounds);
+                      });
+
+                  bounds.extend(fsPosition);
+
+                      Model.markers.push(marker);
+                    }
+
+                    map.fitBounds(bounds);
+                    map.setCenter(bounds.getCenter());
+
+                  });
+
+                } else {
+                    self.mapUnavailable(true);
+                }
+              }();
+
+                // Based on the query this will return the filtered items
+                  self.filteredArray = ko.computed(function() {
+                    return ko.utils.arrayFilter(Model.markers(), function(marker) {
+                      return marker.title.toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
+                    });
+                  }, self);
+
+
+                // Hides or shows the markers based on the filteredArray
+
+                  self.filteredArray.subscribe(function() {
+                    var diffArray = ko.utils.compareArrays(Model.markers(), self.filteredArray());
+                    ko.utils.arrayForEach(diffArray, function(marker) {
+                      if (marker.status === 'deleted') {
+                        marker.value.setMap(null);
+                      } else {
+                        marker.value.setMap(map);
+                      }
+                    });
+                  });
+
+                //Highlight map marker if list item is clicked.
+                self.selectItem = function(listItem) {
+                  google.maps.event.trigger(listItem, 'click');
+                };
+
+                // Allows the rest of the currentMarker variable, clears highlighted color in the list and resets all markers.
+
+                function clearMarkers() {
+                  for(var i = 0; i < Model.markers().length; i++){
+                   Model.markers()[i].highlight(false);
+                 }
+                 Model.currentMarker(null);
+               }
+              };
+
+ko.applyBindings(new ViewModel());
