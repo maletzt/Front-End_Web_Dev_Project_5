@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 var Model = {
     currentMarker: ko.observable(null),
     markers: ko.observableArray()
@@ -47,7 +47,7 @@ var ViewModel = function() {
             $.getJSON(API_ENDPOINT, function(data) {
                     var fsPlaces = data.response.groups[0].items;
 
-                    for (var i = 0; i < fsPlaces.length; i++) {
+                    for (var i = 0, len = fsPlaces.length; i <len; i++) {
                         var fsPosition = new google.maps.LatLng(fsPlaces[i].venue.location.lat, fsPlaces[i].venue.location.lng);
                         var rating = fsPlaces[i].venue.rating;
                         var marker = new google.maps.Marker({
